@@ -1,0 +1,49 @@
+#Intento de hacer la bar chart race con la nueva base de datos generada
+#Descrpcin de la base de datos:
+#La base de datos incluye la fecha de contratos que van de 2020 a 2023,ademas cada campo indica la produccion en barriles
+
+
+library(readr)
+library(ggplot2)
+library(gganimate)
+library(tweenr)
+library(magick)
+library(gifski)
+library(dplyr)
+library(magrittr)
+library(grid)
+
+
+library(readxl)
+Data_Base <- read_excel("C:/Users/A19537/Downloads/Data Base.xlsx",col_types = c("date", "numeric", "numeric", "numeric", "numeric"))
+View(Data_Base)
+#Se pretende que la variable de database no cambie,i.e.,se podra actualizar la base de datos, pero esta ya debe haber sido trabajada
+
+
+
+data <- Data_Base %>%
+  group_by(Columna1) %>% #aqui agrupamos por fecha,solo que  la base usada cambio el campo de la fecha por Columna1
+  filter() %>% #filtramos la informacion
+  top_n(n = 25, wt = `RF-C005-2016-002`) %>% #hacemos un top 25 
+  ungroup()
+
+data <- data[with(data, order(Columna1, -`RF-C005-2016-002`)),]
+data
+
+
+plot_data <- ggplot(data) + #, aes(x = Rank, group = Country, country = as.factor(Code)
+  geom_col(aes(x = `RF-C005-2016-002`, y = Columna1), width = 100, fill = "yellow", color = "black") + # Columns
+  coord_flip(clip = "off", expand = FALSE) + # Flip
+  labs(title='{closest_state}', x = "", y = "Volumen de hidrocarburo producido por contrato producción compartida") + # Labels
+  theme_minimal() + # Theme
+  geom_text(aes(x = `RF-C005-2016-002`, y = -600, label = `RF-C005-2016-002`), hjust = 1) + # Names
+  geom_text(aes(x = `RF-C005-2016-002`, y = `RF-C005-2016-002` + 200, label = Columna1, hjust = 0, color = "black") +#Values
+  scale_y_continuous(labels = scales::comma) + # Format y-axis values
+  scale_x_reverse() + # Highest values on top
+  transition_states(Columna1, transition_length = 4, state_length = 1) + # Animate
+  theme(
+    plot.title = element_text(hjust = 0, size = 20),
+    plot.margin = margin(0,2,0,3,"cm"),
+    axis.text.y  = element_blank()
+  )
+plot_data
