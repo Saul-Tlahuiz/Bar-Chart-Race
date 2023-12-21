@@ -47,3 +47,6 @@ plot_data <- ggplot(data) + #, aes(x = Rank, group = Country, country = as.facto
     axis.text.y  = element_blank()
   )
 plot_data
+
+#checar el link de abajo para tener otra alternativa de como hacer la bar chart race
+https://evamaerey.github.io/little_flipbooks_library/racing_bars/racing_barcharts.html#7
