@@ -1,0 +1,121 @@
+library(readxl)
+library(ggplot2)
+library(gganimate)
+library(tweenr)
+library(magick)
+library(gifski)
+library(dplyr)
+library(magrittr)
+library(grid)
+
+library(readxl)
+New_bd <- read_excel("Nueva base de datos(bar chart).xlsx", 
+                                             col_types = c("date", "numeric", "numeric", 
+                                                           "numeric", "numeric", "numeric"))
+View(New_bd)
+
+
+datos <- na.omit(New_bd) #Con este comando omitiremos los valores no encontrados para evitar futuros problemas al manejar los datos
+datos
+datos_1 <- as.data.frame(datos) #convertimos a data frame los datos una ves se omitieron los n/a
+datos_1
+
+data <- datos_1 %>%
+  group_by(`Tipo de información`) %>%
+  filter()%>%
+  top_n(n = 6, wt = Niveles...6)%>%
+  arrange(desc(Niveles...6))%>%
+  arrange(desc(Niveles...2))%>%
+  arrange(desc(Niveles...3))%>%
+  arrange(desc(Niveles...4))%>%
+  arrange(desc(Niveles...5))%>%
+  ungroup()
+  
+data
+
+data <- data[with(data,order(`Tipo de información`,-Niveles...6)),]
+
+
+#Esta grafica solo es una prueba de como se veria un solo contrato graficado y sirve de guia para lo que se hizo en la siguiente 
+plot_levels <- ggplot(data) + 
+  geom_col(aes(x = Niveles...6, y = `Tipo de información`), width = 100, fill = "#5F9EA0", color = "black") + # Columns
+  coord_flip(clip = "off", expand = FALSE) + # Flip
+  labs(title='Fecha', x = "", y = "Valor en miles de pesos") + # Labels
+  theme_minimal() + # Theme
+  geom_text(aes(x = Niveles...6, y = 0, label = as.Date(`Tipo de información`)), hjust = 1) + # Names
+  geom_text(aes(x = Niveles...6, y = Niveles...6  + 200, label = as.character(Niveles...6)), hjust = 0) +#Values
+  scale_y_continuous(labels = scales::comma) + # Format y-axis values
+  scale_x_reverse() + # Highest values on top
+  transition_states(`Tipo de información`, transition_length = 5, state_length = 1) + # Animate
+  theme(
+    plot.title = element_text(hjust = 0, size = 20),
+    plot.margin = margin(0,2,0,3,"cm"),
+    axis.text.y  = element_blank()
+  )
+plot_levels
+
+
+#Aqui ya tenemos la grafica de como se verian los 5 contratos ploteados de la base de datos tomada,i.e.,sin ningun cambio.
+plot_levels1 <- ggplot(data) + 
+  geom_col(aes(x = Niveles...6, y = `Tipo de información`), width = 1000, fill = "#5F9EA0", color = "black")+#Columna para el nivel 6
+  geom_col(aes(x = Niveles...5, y = `Tipo de información`), width = 1000, fill = "#6E8B3D", color = "black")+#Columna para el nivel 5
+  geom_col(aes(x = Niveles...4, y = `Tipo de información`), width = 1000, fill = "#CD5B45", color = "black")+#Columna para el nivel 4
+  geom_col(aes(x = Niveles...3, y = `Tipo de información`), width = 1000, fill = "#CD5C5C", color = "black")+#cOlumna para el nivel 3
+  geom_col(aes(x = Niveles...2, y = `Tipo de información`), width = 1000, fill = "#CD6889", color = "black")+#columna para el nivel 2
+  coord_flip(clip = "off", expand = FALSE) + # Flip
+  labs(title='Fecha', x = "", y = "Valor en miles(por definir de que)") + # Labels
+  theme_minimal() + # Theme
+  geom_text(aes(x = Niveles...6, y = 0, label = as.Date(`Tipo de información`)), hjust = 1) +#Names
+  geom_text(aes(x = Niveles...6, y = Niveles...6  + 200, label = as.character(Niveles...6)),hjust = 0)+#Values Nivel 6
+  geom_text(aes(x = Niveles...5, y = 0, label = as.Date(`Tipo de información`)), hjust = 1)+
+  geom_text(aes(x = Niveles...5, y = Niveles...5 + 200, label = as.character(Niveles...5)), hjust = 0)+#values nivel 5
+  geom_text(aes(x = Niveles...4, y = 0, label = as.Date(`Tipo de información`)), hjust = 1)+
+  geom_text(aes(x = Niveles...4, y = Niveles...4 + 200, label = as.character(Niveles...4)), hjust = 0)+#Values nivel 4 
+  geom_text(aes(x = Niveles...3, y = 0, label = as.Date(`Tipo de información`)), hjust = 1)+
+  geom_text(aes(x = Niveles...3, y = Niveles...3 + 200, label = as.character(Niveles...3)), hjust = 0)+#values nivel 3
+  geom_text(aes(x = Niveles...2, y = 0, label = as.Date(`Tipo de información`)), hjust = 1)+
+  geom_text(aes(x = Niveles...2, y = Niveles...2 + 200, label = as.character(Niveles...2)), hjust = 0)+#values nivel 2
+  scale_y_continuous(labels = scales::comma) + # Format y-axis values
+  scale_x_reverse() + # Highest values on top
+  transition_states(`Tipo de información`, transition_length = 5, state_length = 1) + # Animate
+  theme(
+    plot.title = element_text(hjust = 0, size = 20),
+    plot.margin = margin(0,2,0,3,"cm"),
+    axis.text.y  = element_blank(),
+    axis.text.x = element_blank()
+  )
+plot_levels1
+
+save_gif(plot_levels1)
+
+
+#En esta grafica se cambio el nombre de label y se le asigno el de su respectivo contrato a diferencia de la grafica de arriba que muestra la fecha
+plot_levels2 <- ggplot(data) + 
+  geom_col(aes(x = Niveles...6, y = `Tipo de información`), width = 1000, fill = "#5F9EA0", color = "black")+#Columna para el nivel 6
+  geom_col(aes(x = Niveles...5, y = `Tipo de información`), width = 1000, fill = "#6E8B3D", color = "black")+#Columna para el nivel 5
+  geom_col(aes(x = Niveles...4, y = `Tipo de información`), width = 1000, fill = "#CD5B45", color = "black")+#Columna para el nivel 4
+  geom_col(aes(x = Niveles...3, y = `Tipo de información`), width = 1000, fill = "#CD5C5C", color = "black")+#cOlumna para el nivel 3
+  geom_col(aes(x = Niveles...2, y = `Tipo de información`), width = 1000, fill = "#CD6889", color = "black")+#columna para el nivel 2
+  coord_flip(clip = "off", expand = TRUE) + # Flip
+  labs(title = "Fecha", x = "", y = "Valor en miles(por definir de que)") + # Labels
+  theme_minimal() + # Theme
+  geom_text(aes(x = Niveles...6, y = 0, label = "Nivel 6"), hjust = 1) + # Names
+  geom_text(aes(x = Niveles...6, y = Niveles...6  + 200, label = as.character(Niveles...6)), hjust = 0)+#Values Nivel 6
+  geom_text(aes(x = Niveles...5, y = 0, label = "Nivel 5"), hjust = 1)+
+  geom_text(aes(x = Niveles...5, y = Niveles...5 + 200, label = as.character(Niveles...5)), hjust = 0)+#values nivel 5
+  geom_text(aes(x = Niveles...4, y = 0, label = "Nivel 4"), hjust = 1)+
+  geom_text(aes(x = Niveles...4, y = Niveles...4 + 200, label = as.character(Niveles...4)), hjust = 0)+#Values nivel 4 
+  geom_text(aes(x = Niveles...3, y = 0, label = "Nivel 3"), hjust = 1)+
+  geom_text(aes(x = Niveles...3, y = Niveles...3 + 200, label = as.character(Niveles...3)), hjust = 0)+#values nivel 3
+  geom_text(aes(x = Niveles...2, y = 0, label = "Nivel 2"), hjust = 1)+
+  geom_text(aes(x = Niveles...2, y = Niveles...2 + 200, label = as.character(Niveles...2)), hjust = 0)+#values nivel 2
+  scale_y_continuous(labels = scales::comma) + # Format y-axis values
+  scale_x_reverse() + # Highest values on top
+  transition_states(`Tipo de información`, transition_length = 5, state_length = 1) + # Animate
+  theme(
+    plot.title = element_text(hjust = 0, size = 20),
+    plot.margin = margin(0,2,0,3,"cm"),
+    axis.text.y  = element_blank(),
+    axis.text.x = element_blank()
+  )
+plot_levels2
