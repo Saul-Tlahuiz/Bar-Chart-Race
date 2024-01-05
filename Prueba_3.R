@@ -9,6 +9,7 @@ library(magrittr)
 library(grid)
 library(tidyr)
 library(readxl)
+library(extrafont)
 
 bd_pt2 <- read_excel("Copia de Nueva base de datos(bar chart).xlsx", 
                      col_types = c("date", "numeric", "numeric", 
@@ -141,23 +142,23 @@ View(Base_IQY_2)
 Base_IQY_2.2 <- merge(Base_IQY_2,lista_de_campos,all.x = TRUE) #Con este comando lo que hacemos es juntar ambos dataframe
 View(Base_IQY_2.2)                                            #(Base_IQY_2 Y lista_de_campos) tomando como referencia el numero de serie
                                                               #es decir que si tiene el mismo numero de serie en ambos data frames les asignara el nombre del campo
-
 ############################################################################################################################################
 #Animacion 1
 Data <- Base_IQY_2.2%>%
   group_by(Mes)%>%
   filter()%>%
   top_n(n = 7, wt = Produccion)%>%
-  mutate(Rank = Rank)%>%
+  mutate(Rank = min_rank(Rank) * 120)%>%
   ungroup()
 
-Data <- Data[with(Data, order(Año, -Produccion)),]
+Data <- Data[with(Data, order(Mes, -Produccion)),]
 
-plot_campos <- ggplot(Data) + 
-  geom_col(aes(x = Rank, y = Produccion), width = 30, fill = "#008B8B", color = "black") + # Columns
+plot_campos <- ggplot(Data,aes(x = Rank, group = Campo)) + 
+  geom_col(aes(x = Rank, y = Produccion), alpha = 0.5 , width = 100, fill = "#008B8B", color = "black",position = position_dodge2(0.5)) + # Columns
   coord_flip(clip = "off", expand = FALSE) + # Flip
-  labs(title = paste("Produccion ",'{closest_state}', sep=""),subtitle = 'Para Petróleo',  
-       caption  = "Fuente: Fondo Mexicano del Petróleo") + # Labels
+  labs(title = paste("Produccion de Petróleo", sep=""),subtitle = '{closest_state},
+       Barriles diarios',  
+       caption  = "Fuente: Fondo Mexicano del Petróleo") +# Labels
   theme_minimal() + # Theme
   geom_text(aes(x = Rank, y = -600, label = Campo), hjust = 1) + # Names
   geom_text(aes(x = Rank, y = Produccion + 200, label = as.character(Produccion)), hjust = 0, color = "black") +#Values
@@ -167,10 +168,13 @@ plot_campos <- ggplot(Data) +
   theme(
     legend.position="none",
     plot.margin = margin(0,2,0,3,"cm"),
-    plot.title=element_text(size=18, hjust=0.5, face="bold", colour="grey20", vjust=-1),
-    plot.subtitle=element_text(size = 18, hjust=0.5, face="plain", color="grey20"),
-    plot.caption =element_text(size = 10, hjust=0.5, face="plain", color="grey20"),
-    axis.text.y  = element_blank()
+    plot.title=element_text(size=20, hjust=0.5, face="bold", colour="grey20", vjust=-1),
+    plot.subtitle=element_text(size = 18, hjust=0.5, family = "bold" , color="grey20"),
+    plot.caption =element_text(size = 10, hjust = 0, face="plain", color="grey20"),
+    axis.text.y  = element_blank(),
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.title.y = element_blank()
   )
 plot_campos
 
@@ -178,34 +182,34 @@ animate(plot_campos, fps = 40, duration = 80, width = 1000, height = 600)
 
 ########################################################################################################
 #Animacion 2
-rm(Data2)
 Data2 <- Base_IQY_2.2%>%
   group_by(Mes)%>%
   filter()%>%
   top_n(n = 7, wt = Produccion)%>%
-  mutate(Rank = Rank)%>%
+  mutate(Rank = min_rank(Rank)* 120)%>%
   ungroup()
+as.data.frame(Data2)
+Data2 <- Data2[with(Data2, order(Mes, -Produccion)),]
 
-Data2 <- Data2[with(Data2, order(Fecha, -Produccion)),]
 
-plot_campos2 <- ggplot(Data2) + 
-  geom_col(aes(x = Rank, y = Produccion), width = 40, fill = "dodgerblue4" , color = "black") + # Columnas
+plot_campos2 <- ggplot(na.omit(Data2)) + 
+  geom_col(aes(x = Rank, y = Produccion), width = 100, fill = "dodgerblue4" , color = "grey1",position = position_dodge2(0.5)) + # Columnas
   coord_flip(clip = "off", expand = FALSE) + # Flip
-  labs(title = paste("Produccion ",
-                   '{closest_state}', sep=""),subtitle = 'Para Petróleo',  
-       caption  = "Miles de Barriles | Fuente: Fondo Mexicano del Petróleo") + # Ejes
-  theme_light() + # Tema
-  geom_text(aes(x = Rank, y = -600, label = Campo), hjust = 1) + # Nombres
+  labs(title =  paste("Produccion de Petróleo", sep=""),subtitle = '{closest_state},
+       Barriles diarios',  
+       caption  = "Fuente: Fondo Mexicano del Petróleo") + # Ejes
+  theme_minimal() + # Tema
+  geom_text(aes(x = Rank, y = -600, label = Campo), hjust = 1,)+ # Nombres
   geom_text(aes(x = Rank, y = Produccion + 200, label = as.character(Produccion)), hjust = 0, color = "black") +#Valores
   scale_y_continuous(labels = scales :: comma) + # Format y-axis values
   scale_x_reverse() + #Valor mas alto en el top
-  guides(color = F, fill = F)+
-  transition_states(Mes, transition_length = 10, state_length = 5, wrap = TRUE) +# Animacion
+  guides(color = 'none', fill = 'none')+
+  transition_states(Mes, transition_length = 4, state_length = 1, wrap = FALSE) +# Animacion
   theme(
     legend.position="none",
     plot.title=element_text(size=18, hjust=0.5, face="bold", colour="grey20", vjust=-1),
-    plot.subtitle=element_text(size = 18, hjust=0.5, face="plain", color="grey20"),
-    plot.caption =element_text(size = 10, hjust=0.5, face="plain", color="grey20"),
+    plot.subtitle=element_text(size = 18, hjust=0.5, family = "Monotype Corsiva", color="grey20"),
+    plot.caption =element_text(size = 10, hjust = 0, face="plain", color="grey20"),
     axis.line=element_blank(),
     plot.margin = margin(2,2, 2, 4, "cm"), 
     plot.background=element_blank(),
@@ -216,69 +220,16 @@ plot_campos2 <- ggplot(Data2) +
     axis.title.y=element_blank(),
     panel.grid.minor=element_blank(),
     panel.grid.major=element_blank(),
-    panel.background=element_blank(),
+    panel.background=element_rect(fill = "white"),
     panel.border=element_blank(),
     panel.grid.major.x = element_line( size=.1, color="grey8", linetype = "dashed" ),
     panel.grid.minor.x = element_line( size=.1, color="grey8", linetype = "dashed" )
   )
 plot_campos2
 
+mtext("Barriles diarios", side = 3)
+
 animate(plot_campos2, fps = 40, duration = 80, width = 1000, height = 600)
-
-#Tal vez las variaciones de fechas y produccion hacen que se mueva tanto la grafica y por lo tanto no se llegue a visualizar de la 
-#forma en que se desea, de todas formas seguir intentando de otra forma
-
-#Nota:Lo mas probable hasta el momento es que no se vizualice bien por que los tiempos de la variable Data usada para graficar
-#cambian en periodos muy cortos de tiempo y ademas no tenemos informacion para todos los campos, lo que genera tanto cambio en la grafica y
-#no se puede mantener estable.
-
-
-##########################################################################################################################################
-#Animacion 3
-rm(bd)
-bd <- na.omit(Base_IQY_2.2) %>%
-  group_by(Mes)%>%
-  filter() %>%
-  arrange(Rank)%>%  #Nota:El arrange me da el ranking mas alto de cada fecha,no me da el mas alto de toda la base por cada fecha
-  top_n(n = 7, wt = Produccion)%>%
-  ungroup()
-
-bd <- bd[with(bd, order(Año, -Produccion)),]
-
-plot_bd <- ggplot(bd,aes(Rank,group = Campo, fill = "red")) +
-  geom_col(aes(x = Rank,y = Produccion), alpha = 0.9,width = 50, color = "red") +
-  coord_flip(clip = "off", expand = FALSE) +
-  geom_text(aes(y = 0, label = paste(Campo)), vjust = 0.2, hjust = 1) +
-  geom_text(aes(y = Rank, label = as.character(Produccion), hjust = 0)) +
-  scale_y_continuous(labels = scales::comma) +
-  scale_x_reverse() +
-  guides(color = F, fill = F) +
-  transition_states(Mes, transition_length = 1, state_length = 1, wrap= F) + 
-  labs(title = paste("Produccion de ",'{closest_state}', sep=""),subtitle = 'Para Petróleo',
-       caption  = "Miles de Barriles | Fuente: Fondo Mexicano del Petróleo") +
-  theme(
-    legend.position="none",
-    plot.title=element_text(size=18, hjust=0.5, face="bold", colour="grey20", vjust=-1),
-    plot.subtitle=element_text(size = 18, hjust=0.5, face="plain", color="grey20"),
-    plot.caption =element_text(size = 10, hjust=0.5, face="plain", color="grey20"),
-    axis.line=element_blank(),
-    plot.margin = margin(2,2, 2, 4, "cm"), 
-    plot.background=element_blank(),
-    axis.text.x=element_blank(),
-    axis.text.y=element_blank(),
-    axis.ticks=element_blank(),
-    axis.title.x=element_blank(),
-    axis.title.y=element_blank(),
-    panel.grid.minor=element_blank(),
-    panel.grid.major=element_blank(),
-    panel.background=element_blank(),
-    panel.border=element_blank(),
-    panel.grid.major.x = element_line( size=.1, color="grey80", linetype = "dashed" ),
-    panel.grid.minor.x = element_line( size=.1, color="grey80", linetype = "dashed" )
-  )
-plot_bd
-
-animate(plot_bd, fps = 40, duration = 80, width = 1000, height = 600)
 
 
 
