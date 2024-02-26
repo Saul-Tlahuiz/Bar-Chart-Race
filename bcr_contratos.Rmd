@@ -1,0 +1,144 @@
+---
+title: "Evaluación de los principales contratos productores de petróleo"
+author: "Tlahuiz Tenorio Giovanni Saúl"
+date: "2024-02-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+```
+
+```{r, echo=FALSE,message=FALSE,warning=FALSE}
+library(readxl)
+library(ggplot2)
+library(gganimate)
+library(tweenr)
+library(magick)
+library(gifski)
+library(dplyr)
+library(magrittr)
+library(grid)
+library(tidyr)
+library(readxl)
+library(extrafont)
+library(scales)
+```
+
+```{r, echo= FALSE,message=FALSE,warning=FALSE}
+lista_de_campos <- read_excel("C:/Users/A19537/Downloads/lista de campos.xlsx")
+
+base_datos_iqy <- read_excel("base_datos_iqy.xlsx", 
+                             col_types = c("date", "numeric", "numeric", 
+                                           "numeric", "numeric", "numeric", 
+                                           "numeric", "numeric", "numeric", 
+                                           "numeric", "numeric", "numeric", 
+                                           "numeric", "numeric", "numeric", 
+                                           "numeric", "numeric", "numeric", 
+                                           "numeric", "numeric"), skip = 17)
+```
+
+
+```{r, echo=FALSE,message=FALSE,warning=FALSE,include=FALSE}
+Base_IQY <- gather(data = base_datos_iqy,'Serie de Producción de Petróleo','Produccion',SN3390,SN4029,
+                   SN944,SN963,SN982,SN1001,SN1020,SN1039,SN1153,SN4428,SN1302,SN2512,
+                   SN4479,SN2216,SN2235,SN1915,SN2569,SN2791,SN2883)#aqui se agregan los contratos nuevos.
+as.data.frame(Base_IQY)
+```
+
+```{r,echo=FALSE,message=FALSE,warning=FALSE,include=FALSE}
+Base_IQY_2 <- Base_IQY %>%
+  mutate(Mes = format(Fecha,"%B de %Y"))%>%
+  mutate(Año = format(Fecha, "%Y"))%>%
+  mutate(Rank = min_rank(desc(Produccion)))
+```
+
+```{r,echo=FALSE,message=FALSE,warning=FALSE,include=FALSE}
+as.data.frame(na.omit(Base_IQY_2))
+```
+
+
+```{r,echo=FALSE,message=FALSE,warning=FALSE,include=FALSE}
+Base_IQY_2.2 <- merge(Base_IQY_2,lista_de_campos,all.x = TRUE)
+```
+
+
+```{r,echo=FALSE,message=FALSE,warning=FALSE,include=FALSE}
+Data <- Base_IQY_2.2%>%
+  group_by(Fecha)%>%
+  filter(Produccion != 0)%>%#filtramos la informacion para que solo se vean los valores distintos de 0 en la gráfica
+  top_n(n = 7, wt = Produccion)%>%
+  mutate(Rank = min_rank(Rank) * 120)%>%
+  mutate(Produccion = (Produccion)/1000)%>%
+  ungroup()
+
+Data <- Data[with(Data, order(Fecha, -Produccion)),]
+```
+
+
+```{r,echo=FALSE,message=FALSE,warning=FALSE,include=FALSE}
+plot_campos <- ggplot(Data,aes(x = Rank, group = Campo)) + 
+  geom_col(aes(x = Rank, y = Produccion), alpha = 0.9 , width = 100, fill = "#1C527B", color = "black") + # Columnas
+  coord_flip(clip = "off", expand = FALSE) + # Flip
+  labs(title = paste("Producción de petróleo 
+  {closest_state}", sep=""),subtitle = 'Miles de barriles diarios',  
+       caption  = "Fuente: Fondo Mexicano del Petróleo") +# Labels o ejes
+  theme_minimal() + # Tema de la grafica
+  geom_text(aes(x = Rank, y = 0, label = Campo), hjust = 1) + # Names
+  geom_text(aes(x = Rank, y = Produccion + 0, label = as.character(round(Produccion,1))), hjust = 0, color = "black") +#Valores observados
+  scale_y_continuous(labels = scales::comma) + # Formato de los valores para el eje y
+  scale_x_reverse() + # Ponemos el valor mas alto en el top de la grafica
+  transition_states(Fecha, transition_length = 1, state_length = 1) + # Animamos la grafica pasando como paranmetro de movimiento la columna Fecha
+  theme(
+    legend.position="none",
+    plot.margin = margin(0,2,0,4,"cm"),
+    plot.title=element_text(size=22, hjust=0.5, face="plain", colour="grey20", vjust=-1, family = "Verdana"),#tamaño de la fuente de titulo
+    plot.subtitle=element_text(size = 20, hjust=0.5, family = "Corbel" , color="grey20"),#tamaño y fuente del subtitulo
+    plot.caption =element_text(size = 15, hjust = 0, face = "plain", color="grey20", family = "Trebuchet MS"),#tamaño y fuente de la nota inferior
+    axis.text.y  = element_blank(),
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.title.y = element_blank()
+  )
+#Renderizamos la grafica
+plot_campos
+
+```
+
+
+```{r,echo=FALSE,message=FALSE,warning=FALSE}
+animate(plot_campos, fps = 40, duration = 80, width = 1000, height = 400,renderer = gifski_renderer(loop = F))
+```
+
+
+```{r,echo=FALSE,message=FALSE,warning=FALSE}
+
+bd_deals <- subset(Data,Data$Mes == "octubre de 2023")
+
+plot_deals <- ggplot(bd_deals,aes(x = Rank, group = Campo)) + 
+  geom_col(aes(x = Rank, y = Produccion), alpha = 0.9 , width = 100, fill = "#1C527B", color = "black") + # Columnas
+  coord_flip(clip = "off", expand = FALSE)+ # Flip
+  labs(title = paste("Producción de petróleo 
+  2023-08-01", sep=""),subtitle = 'Miles de barriles diarios',  
+       caption  = "Fuente: Fondo Mexicano del petróleo") +# Labels o ejes
+  theme_minimal() + # Tema de la grafica
+  geom_text(aes(x = Rank, y = 0, label = Campo), hjust = 1) + # Names
+  geom_text(aes(x = Rank, y = Produccion + 0, label = as.character(round(Produccion,1))), hjust = 0, color = "black") +#Valores observados
+  scale_y_continuous(labels = scales::comma) + # Formato de los valores para el eje y
+  scale_x_reverse()+
+  theme(
+    legend.position="none",
+    plot.margin = margin(0,2,0,4,"cm"),
+    plot.title=element_text(size=22, hjust=0.5, face="plain", colour="grey20", vjust=-1, family = "Verdana"),#tamaño de la fuente de titulo
+    plot.subtitle=element_text(size = 20, hjust=0.5, family = "Corbel" , color="grey20"),#tamaño y fuente del subtitulo
+    plot.caption =element_text(size = 15, hjust = 0, face = "plain", color="grey20", family = "Trebuchet MS"),#tamaño y fuente de la nota inferior
+    axis.text.y  = element_blank(),
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.title.y = element_blank()
+  )
+
+plot_deals
+```
+ 
+
